@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Invoices" %} - Fakti{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">{% trans "Invoices" %}</h1>
+        <a href="{% url 'invoice_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i> {% trans "New Invoice" %}
+        </a>
+    </div>
+
+    <!-- Status Tabs -->
+    <ul class="nav nav-tabs mb-3">
+        <li class="nav-item">
+            <a class="nav-link {% if not request.GET.status %}active{% endif %}" href="{% url 'invoice_list' %}">
+                {% trans "All" %}
+                <span class="badge bg-secondary ms-1">{{ total_invoices }}</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if request.GET.status == 'draft' %}active{% endif %}" href="{% url 'invoice_list' %}?status=draft">
+                {% trans "Draft" %}
+                <span class="badge bg-secondary ms-1">{{ draft_count }}</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if request.GET.status == 'sent' %}active{% endif %}" href="{% url 'invoice_list' %}?status=sent">
+                {% trans "Sent" %}
+                <span class="badge bg-info ms-1">{{ sent_count }}</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if request.GET.status == 'paid' %}active{% endif %}" href="{% url 'invoice_list' %}?status=paid">
+                {% trans "Paid" %}
+                <span class="badge bg-success ms-1">{{ paid_count }}</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if request.GET.status == 'overdue' %}active{% endif %}" href="{% url 'invoice_list' %}?status=overdue">
+                {% trans "Overdue" %}
+                <span class="badge bg-danger ms-1">{{ overdue_count }}</span>
+            </a>
+        </li>
+    </ul>
+
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>{% trans "Invoice #" %}</th>
+                            <th>{% trans "Client" %}</th>
+                            <th>{% trans "Date" %}</th>
+                            <th>{% trans "Due Date" %}</th>
+                            <th>{% trans "Amount" %}</th>
+                            <th>{% trans "Status" %}</th>
+                            <th>{% trans "Actions" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for invoice in invoices %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'invoice_detail' invoice.pk %}" class="text-decoration-none fw-medium">
+                                    {{ invoice.invoice_number }}
+                                </a>
+                            </td>
+                            <td>
+                                <a href="{% url 'client_detail' invoice.client.pk %}" class="text-decoration-none">
+                                    {{ invoice.client.name }}
+                                </a>
+                            </td>
+                            <td>{{ invoice.issue_date }}</td>
+                            <td>{{ invoice.due_date }}</td>
+                            <td>{{ invoice.total|floatformat:2 }} {{ invoice.currency }}</td>
+                            <td>
+                                {% if invoice.status == 'draft' %}
+                                <span class="badge bg-secondary">{% trans "Draft" %}</span>
+                                {% elif invoice.status == 'sent' %}
+                                <span class="badge bg-info">{% trans "Sent" %}</span>
+                                {% elif invoice.status == 'paid' %}
+                                <span class="badge bg-success">{% trans "Paid" %}</span>
+                                {% elif invoice.status == 'overdue' %}
+                                <span class="badge bg-danger">{% trans "Overdue" %}</span>
+                                {% elif invoice.status == 'canceled' %}
+                                <span class="badge bg-dark">{% trans "Canceled" %}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'invoice_detail' invoice.pk %}" class="btn btn-outline-primary" title="{% trans 'View' %}">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{% url 'invoice_update' invoice.pk %}" class="btn btn-outline-secondary" title="{% trans 'Edit' %}">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <a href="{% url 'invoice_pdf' invoice.pk %}" class="btn btn-outline-dark" title="{% trans 'Download PDF' %}">
+                                        <i class="bi bi-file-pdf"></i>
+                                    </a>
+                                    <a href="{% url 'invoice_delete' invoice.pk %}" class="btn btn-outline-danger" title="{% trans 'Delete' %}">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4">
+                                <div class="py-5">
+                                    <i class="bi bi-file-earmark-text text-muted" style="font-size: 3rem;"></i>
+                                    <h5 class="mt-3">{% trans "No invoices found" %}</h5>
+                                    <p class="text-muted mb-3">
+                                        {% if request.GET.status %}
+                                            {% with status=request.GET.status %}
+                                                {% if status == 'draft' %}
+                                                    {% trans "You don't have any draft invoices" %}
+                                                {% elif status == 'sent' %}
+                                                    {% trans "You don't have any sent invoices" %}
+                                                {% elif status == 'paid' %}
+                                                    {% trans "You don't have any paid invoices" %}
+                                                {% elif status == 'overdue' %}
+                                                    {% trans "You don't have any overdue invoices" %}
+                                                {% else %}
+                                                    {% trans "No invoices match your filter" %}
+                                                {% endif %}
+                                            {% endwith %}
+                                        {% else %}
+                                            {% trans "Create your first invoice to get started" %}
+                                        {% endif %}
+                                    </p>
+                                    <a href="{% url 'invoice_create' %}" class="btn btn-primary">
+                                        <i class="bi bi-plus-lg"></i> {% trans "Create Invoice" %}
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

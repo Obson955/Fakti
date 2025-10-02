@@ -1,0 +1,17 @@
+# Core Framework
+Django==5.1.1
+
+# Database
+psycopg2-binary==2.9.9  # PostgreSQL adapter (we'll use SQLite for development)
+
+# PDF Generation
+weasyprint==62.3
+
+# Environment Variables
+python-decouple==3.8
+
+# Image Processing (for logos)
+Pillow==10.4.0
+
+# Development tools
+django-debug-toolbar==4.4.6

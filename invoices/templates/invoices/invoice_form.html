@@ -1,0 +1,439 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}
+{% if invoice.pk %}
+{% trans "Edit Invoice" %} {{ invoice.invoice_number }}
+{% else %}
+{% trans "New Invoice" %}
+{% endif %}
+- Fakti
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'invoice_list' %}">{% trans "Invoices" %}</a></li>
+            {% if invoice.pk %}
+            <li class="breadcrumb-item"><a href="{% url 'invoice_detail' invoice.pk %}">{{ invoice.invoice_number }}</a></li>
+            <li class="breadcrumb-item active">{% trans "Edit" %}</li>
+            {% else %}
+            <li class="breadcrumb-item active">{% trans "New Invoice" %}</li>
+            {% endif %}
+        </ol>
+    </nav>
+
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title mb-0">
+                {% if invoice.pk %}
+                {% trans "Edit Invoice" %}
+                {% else %}
+                {% trans "New Invoice" %}
+                {% endif %}
+            </h3>
+        </div>
+        <div class="card-body">
+            <form method="post" id="invoice-form">
+                {% csrf_token %}
+                
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {% for error in form.non_field_errors %}
+                    {{ error }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                <!-- Client Information -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="{{ form.client.id_for_label }}" class="form-label">{{ form.client.label }} *</label>
+                            {{ form.client }}
+                            {% if form.client.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.client.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                            <div class="mt-2">
+                                <a href="{% url 'client_create' %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-person-plus"></i> {% trans "Add New Client" %}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Invoice Details -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="{{ form.invoice_number.id_for_label }}" class="form-label">{{ form.invoice_number.label }} *</label>
+                            {{ form.invoice_number }}
+                            {% if form.invoice_number.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.invoice_number.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="{{ form.issue_date.id_for_label }}" class="form-label">{{ form.issue_date.label }} *</label>
+                            {{ form.issue_date }}
+                            {% if form.issue_date.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.issue_date.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="{{ form.due_date.id_for_label }}" class="form-label">{{ form.due_date.label }} *</label>
+                            {{ form.due_date }}
+                            {% if form.due_date.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.due_date.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Currency -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="{{ form.currency.id_for_label }}" class="form-label">{{ form.currency.label }} *</label>
+                            {{ form.currency }}
+                            {% if form.currency.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.currency.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Line Items -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">{% trans "Invoice Items" %}</h5>
+                    </div>
+                    <div class="card-body">
+                        {{ formset.management_form }}
+                        {% if formset.non_form_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in formset.non_form_errors %}
+                            {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        <table class="table" id="line-items-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 50%">{% trans "Description" %} *</th>
+                                    <th>{% trans "Quantity" %} *</th>
+                                    <th>{% trans "Unit Price" %} *</th>
+                                    <th>{% trans "Total" %}</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for form in formset.forms %}
+                                <tr class="formset-row">
+                                    <td>
+                                        {% for hidden in form.hidden_fields %}
+                                        {{ hidden }}
+                                        {% endfor %}
+                                        {{ form.description }}
+                                        {% if form.description.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.description.errors %}
+                                            {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {{ form.quantity }}
+                                        {% if form.quantity.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.quantity.errors %}
+                                            {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {{ form.unit_price }}
+                                        {% if form.unit_price.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.unit_price.errors %}
+                                            {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="line-total">0.00</div>
+                                    </td>
+                                    <td>
+                                        {% if formset.can_delete %}
+                                        <button type="button" class="btn btn-sm btn-outline-danger remove-form">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                        {{ form.DELETE }}
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="5">
+                                        <button type="button" id="add-line-item" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-plus"></i> {% trans "Add Item" %}
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Additional Details -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="{{ form.notes.id_for_label }}" class="form-label">{{ form.notes.label }}</label>
+                            {{ form.notes }}
+                            {% if form.notes.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.notes.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.tax_percent.id_for_label }}" class="form-label">{{ form.tax_percent.label }}</label>
+                                    <div class="input-group">
+                                        {{ form.tax_percent }}
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                    {% if form.tax_percent.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.tax_percent.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.discount_percent.id_for_label }}" class="form-label">{{ form.discount_percent.label }}</label>
+                                    <div class="input-group">
+                                        {{ form.discount_percent }}
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                    {% if form.discount_percent.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.discount_percent.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.status.id_for_label }}" class="form-label">{{ form.status.label }}</label>
+                            {{ form.status }}
+                            {% if form.status.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.status.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 d-flex justify-content-between">
+                    <a href="{% if invoice.pk %}{% url 'invoice_detail' invoice.pk %}{% else %}{% url 'invoice_list' %}{% endif %}" class="btn btn-outline-secondary">
+                        {% trans "Cancel" %}
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        {% if invoice.pk %}
+                        {% trans "Update Invoice" %}
+                        {% else %}
+                        {% trans "Create Invoice" %}
+                        {% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add Bootstrap classes to form inputs
+        const inputs = document.querySelectorAll('input, select, textarea');
+        inputs.forEach(input => {
+            if (input.type !== 'checkbox' && input.type !== 'radio') {
+                input.classList.add('form-control');
+            } else if (input.type === 'checkbox' || input.type === 'radio') {
+                input.classList.add('form-check-input');
+            }
+        });
+        
+        // Fix any styling issues with formset
+        document.querySelectorAll('.formset-row input, .formset-row select').forEach(input => {
+            if (input.type !== 'checkbox' && input.type !== 'radio' && input.type !== 'hidden') {
+                input.classList.add('form-control');
+            }
+        });
+        
+        // Hide DELETE checkboxes but keep them in the form
+        document.querySelectorAll('input[name$="-DELETE"]').forEach(checkbox => {
+            if (checkbox.closest('div')) {
+                checkbox.closest('div').style.display = 'none';
+            } else {
+                checkbox.style.display = 'none';
+            }
+        });
+        
+        // Calculate line totals
+        function calculateLineTotals() {
+            const rows = document.querySelectorAll('#line-items-table .formset-row');
+            let subtotal = 0;
+            const currencyField = document.getElementById('id_currency');
+            const currencyValue = currencyField ? currencyField.value : 'HTG';
+            
+            rows.forEach(row => {
+                const deleteCheckbox = row.querySelector('input[name$="-DELETE"]');
+                if (deleteCheckbox && deleteCheckbox.checked) {
+                    return; // Skip deleted rows
+                }
+                
+                const quantity = parseFloat(row.querySelector('input[name$="-quantity"]').value) || 0;
+                const price = parseFloat(row.querySelector('input[name$="-unit_price"]').value) || 0;
+                const lineTotal = quantity * price;
+                
+                row.querySelector('.line-total').textContent = `${lineTotal.toFixed(2)} ${currencyValue}`;
+                subtotal += lineTotal;
+            });
+        }
+        
+        // Calculate totals when quantities or prices change
+        document.querySelectorAll('input[name$="-quantity"], input[name$="-unit_price"]').forEach(input => {
+            input.addEventListener('input', calculateLineTotals);
+        });
+        
+        // Update currency display when currency changes
+        const currencyField = document.getElementById('id_currency');
+        if (currencyField) {
+            currencyField.addEventListener('change', calculateLineTotals);
+        }
+        
+        // Add line item
+        const addButton = document.getElementById('add-line-item');
+        if (addButton) {
+            addButton.addEventListener('click', function() {
+                // Get total form count
+                const formCount = document.getElementById('id_form-TOTAL_FORMS');
+                const index = parseInt(formCount.value);
+                
+                // Clone the first row
+                const template = document.querySelector('#line-items-table .formset-row');
+                const newRow = template.cloneNode(true);
+                
+                // Update form IDs and names
+                newRow.querySelectorAll('input, select, textarea').forEach(input => {
+                    if (input.getAttribute('name')) {
+                        const name = input.getAttribute('name').replace(/form-\d+/, `form-${index}`);
+                        input.setAttribute('name', name);
+                    }
+                    
+                    if (input.getAttribute('id')) {
+                        const id = input.getAttribute('id').replace(/form-\d+/, `form-${index}`);
+                        input.setAttribute('id', id);
+                    }
+                    
+                    // Clear values for input fields but not hidden fields
+                    if (!input.type || input.type !== 'hidden' || !input.name.includes('id')) {
+                        input.value = '';
+                    }
+                    
+                    // Add event listeners to new inputs
+                    if (input.name && (input.name.includes('-quantity') || input.name.includes('-unit_price'))) {
+                        input.addEventListener('input', calculateLineTotals);
+                    }
+                });
+                
+                // Insert the new row before the "Add Item" button row
+                const tfoot = document.querySelector('#line-items-table tfoot');
+                tfoot.parentNode.insertBefore(newRow, tfoot);
+                
+                // Increment the form count
+                formCount.value = index + 1;
+                
+                // Add remove event to the new row
+                const removeButton = newRow.querySelector('.remove-form');
+                if (removeButton) {
+                    removeButton.addEventListener('click', function() {
+                        const deleteCheckbox = newRow.querySelector('input[name$="-DELETE"]');
+                        if (deleteCheckbox) {
+                            deleteCheckbox.checked = true;
+                            newRow.style.display = 'none';
+                            calculateLineTotals();
+                        }
+                    });
+                }
+            });
+        }
+        
+        // Remove line item
+        document.querySelectorAll('.remove-form').forEach(button => {
+            button.addEventListener('click', function() {
+                const row = this.closest('tr');
+                const deleteCheckbox = row.querySelector('input[name$="-DELETE"]');
+                if (deleteCheckbox) {
+                    deleteCheckbox.checked = true;
+                    row.style.display = 'none';
+                    calculateLineTotals();
+                }
+            });
+        });
+        
+        // Initialize line totals on load
+        calculateLineTotals();
+    });
+</script>
+{% endblock %}
